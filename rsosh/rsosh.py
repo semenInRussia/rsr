@@ -1,6 +1,7 @@
 import copy
 from html.parser import HTMLParser
 from http.client import HTTPResponse, HTTPSConnection
+from urllib.parse import urlparse
 
 from attr import dataclass
 
@@ -178,12 +179,12 @@ class Parser(HTMLParser):
         self._is_parsed_olymps_fresh = False
 
 
-RSR_HOST = "rsr-olymp.ru"
-CHUNK_SIZE = 1024 * 1024
+RSR_URL = "https://rsr-olymp.ru"
+CHUNK_SIZE = 1024 * 1024 * 1024
 
 
-def parse_from_web(host=RSR_HOST) -> list[Olymp]:
-    resp = request_to_host(host)
+def parse_from_web(url=RSR_URL) -> list[Olymp]:
+    resp = _do_http_request(url)
     p = Parser()
 
     chunk = resp.read(CHUNK_SIZE)
@@ -194,9 +195,14 @@ def parse_from_web(host=RSR_HOST) -> list[Olymp]:
     return p.parsed_olymps
 
 
-def request_to_host(host) -> HTTPResponse:
+def _do_http_request(url) -> HTTPResponse:
+    u = urlparse(url)
+    return _http_request_to_host(u.hostname, u.path)
+
+
+def _http_request_to_host(host, uri="/") -> HTTPResponse:
     c = HTTPSConnection(host)
-    c.request("GET", "/")
+    c.request("GET", uri)
     resp = c.getresponse()
     return resp
 
