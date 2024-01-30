@@ -87,11 +87,12 @@ class Parser(HTMLParser):
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         attrs_dict = dict(attrs)
+        
+        if tag == "table" and not self._in_table:
+            self._in_table == attrs_dict.get("class") == "mainTableInfo"
+            return
 
         if not self._in_table:
-            self._in_table = (
-                tag == "table" and attrs_dict.get("class") == "mainTableInfo"
-            )
             return
 
         # ignore any thing inside </thead> tag
