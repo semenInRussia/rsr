@@ -1,3 +1,5 @@
+"""Parse a list of Russian school Olympiad from rsr-olymp.ru."""
+
 import copy
 from html.parser import HTMLParser
 from http.client import HTTPResponse, HTTPSConnection
@@ -8,6 +10,8 @@ from attr import dataclass
 
 @dataclass
 class Olymp:
+    """A representation of a school Olympiad."""
+
     number: int
     name: str
     url: str
@@ -24,6 +28,8 @@ def _remove_extra_whitespaces(s):
 
 @dataclass
 class _ParsingOlymp:
+    """A class to store parsed parts of Olymp."""
+
     number: int | None
     name: str | None
     url: str | None
@@ -31,32 +37,35 @@ class _ParsingOlymp:
     levels: list[int] | None
 
     def is_parsed(self) -> bool:
-        """Return True, if this olympiad in parsing proccess already parsed."""
-
-        for _, val in self.__dict__.items():
-            if val is None:
-                return False
-
-        return True
+        """Return True, if this Olympiad in parsing process already parsed."""
+        # return true if all values aren't None
+        return all(self.__dict__.values())
 
 
 def empty_olymp() -> _ParsingOlymp:
+    """Return an _ParsingOlymp instance with empty values."""
     return _ParsingOlymp(None, None, None, None, None)
 
 
 class Parser(HTMLParser):
-    _parsed_olymps: list[Olymp] | None = None
+    """A class to parse a web-page with RSR Olympiads table."""
+
+    # the result fields
     _is_parsed_olymps_fresh: bool = False
     _olymps: list[_ParsingOlymp] = []
+    _parsed_olymps: list[Olymp] | None = None
 
+    _current_olymp = empty_olymp()
+
+    # state flags to check the current event, yes it's an anti-pattern
+    # but anyway
     _in_table = False
     _in_thead = False
     _is_parse_olymp = False
 
-    _current_olymp = empty_olymp()
-
     @property
     def parsed_olymps(self) -> list[Olymp]:
+        """Return already parsed Olympiads."""
         if self._is_parsed_olymps_fresh:
             return self._parsed_olymps or []
 
@@ -85,7 +94,9 @@ class Parser(HTMLParser):
         self._parsed_olymps = olymps
         return olymps
 
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+    def handle_starttag(  # noqa
+        self, tag: str, attrs: list[tuple[str, str | None]]
+    ) -> None:
         attrs_dict = dict(attrs)
 
         if tag == "table" and not self._in_table:
@@ -114,8 +125,8 @@ class Parser(HTMLParser):
             self._current_olymp.url = attrs_dict.get("href")
             return
 
-    def handle_data(self, data: str) -> None:
-        # handle tag content only if we parse an olympiad
+    def handle_data(self, data: str) -> None:  # noqa
+        # handle tag content only if we parse an Olympiad
         if not self._is_parse_olymp or not self._in_table:
             return
 
@@ -161,7 +172,7 @@ class Parser(HTMLParser):
 
         self._current_olymp.lessons.append(_remove_extra_whitespaces(data))
 
-    def handle_endtag(self, tag: str) -> None:
+    def handle_endtag(self, tag: str) -> None:  # noqa
         if tag == "table":
             self._in_table = False
 
@@ -185,6 +196,7 @@ CHUNK_SIZE = 1024 * 1024 * 1024
 
 
 def parse_from_web(url=RSR_URL) -> list[Olymp]:
+    """Parse Olympiads from web-page over the http(s) ."""
     resp = _do_http_request(url)
     p = Parser()
 
@@ -208,7 +220,8 @@ def _http_request_to_host(host, uri="/") -> HTTPResponse:
     return resp
 
 
-def main():
+def _main():
+    """Just use API that defined above at the file."""
     parsed_olymps = parse_from_web()
 
     for olymp in parsed_olymps:
@@ -220,4 +233,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    _main()

@@ -1,0 +1,6 @@
+[tool.ruff]
+select = [
+  "F", "E", "W", "I", "N", "D", "UP", "S", "B", "A", "C4", "SLF", "SIM",
+  "ARG", "PL", "TRY", "NPY"
+] # almost max
+ignore = ["D105"]
